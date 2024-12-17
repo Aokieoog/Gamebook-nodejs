@@ -7,6 +7,8 @@ const apiRoutes = require('./src/routes/api');
 const app = express();
 const PORT = process.env.PORT;
 const authMiddleware = require('./src/services/authMiddleware');
+const cookieParser = require('cookie-parser'); // 解析 cookie
+app.use(cookieParser()); // 使用 cookie 中间件
 
 // 连接 MongoDB
 mongoose.connect(process.env.MONGO_URI, {
