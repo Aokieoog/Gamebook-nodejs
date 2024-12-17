@@ -171,10 +171,41 @@ router.get('/items', async (req, res) => {
 // 创建订单
 router.post('/orders', async (req, res) => {
   try {
-    const order = await Order.create(req.body);
-    res.status(201).json(order);
+    const { userId, itemId, jin, yin, tong, ress } = req.body;
+    // 验证必填字段
+    if (!userId) {
+      return res.status(400).json({ error: 'userId 是必填字段' });
+    }
+    if (!itemId) {
+      return res.status(400).json({ error: 'itemId 是必填字段' });
+    }
+    // 创建订单
+    const newOrder = new Order({
+      userId,
+      itemId,
+      jin: jin || 0,
+      yin: yin || 0,
+      tong: tong || 0,
+      ress: ress || 1
+    });
+    const savedOrder = await newOrder.save();
+    const populatedOrder = await Order.findById(savedOrder._id)
+      .populate('itemId', 'name iconID'); // 填充 itemId，并指定只返回字段 name 和 price
+    res.status(201).json({
+      message: '订单添加成功',
+      order: {
+        orderid: savedOrder._id,
+        jin: savedOrder.jin,
+        yin: savedOrder.yin,
+        tong: savedOrder.tong,
+        ress: savedOrder.ress,
+        totalValue:savedOrder.totalValue,
+        createdAt: savedOrder.createdAt,
+        item: populatedOrder.itemId // 返回填充后的 item 数据
+      }
+    });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
 

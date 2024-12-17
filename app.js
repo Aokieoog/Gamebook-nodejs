@@ -4,9 +4,9 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const apiRoutes = require('./src/routes/api');
-
 const app = express();
 const PORT = process.env.PORT;
+const authMiddleware = require('./src/services/authMiddleware');
 
 // 连接 MongoDB
 mongoose.connect(process.env.MONGO_URI, {
@@ -18,7 +18,9 @@ mongoose.connect(process.env.MONGO_URI, {
 // 中间件
 app.use(bodyParser.json());
 
+
 // 路由
+app.use(authMiddleware);
 app.use('/api', apiRoutes);
 
 // 启动服务器
