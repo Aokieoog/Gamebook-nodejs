@@ -1,3 +1,4 @@
+const jwt = require('jsonwebtoken');
 const noAuthPaths = ['/api/users', '/api/login', '/api/forget-password'];
 
 function authMiddleware(req, res, next) {

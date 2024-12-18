@@ -171,7 +171,7 @@ router.get('/items', async (req, res) => {
 // 创建订单
 router.post('/orders', async (req, res) => {
   try {
-    const { userId, itemId, jin, yin, tong, ress } = req.body;
+    const { userId, itemId, jin, yin, tong, quantity } = req.body;
     // 验证必填字段
     if (!userId) {
       return res.status(400).json({ error: 'userId 是必填字段' });
@@ -186,7 +186,7 @@ router.post('/orders', async (req, res) => {
       jin: jin || 0,
       yin: yin || 0,
       tong: tong || 0,
-      ress: ress || 1
+      ress: quantity || 1
     });
     const savedOrder = await newOrder.save();
     const populatedOrder = await Order.findById(savedOrder._id)
@@ -210,12 +210,26 @@ router.post('/orders', async (req, res) => {
 });
 
 // 查询订单（包含用户和物品详情）
-router.get('/orders', async (req, res) => {
+router.get('/orderInquiry', async (req, res) => {
+  const { userId } = req.query;
   try {
-    const orders = await Order.find()
-      .populate('userId', 'loginAccount email')
-      .populate('itemId', 'itemName');
-    res.status(200).json(orders);
+    // 确保查询条件是对象形式 { userId: userId }
+    const orders = await Order.find({ userId }) // 查询条件正确格式化
+    .select('-_id -__v')  
+    .populate('itemId', 'name iconID -_id');    // populate 返回 name 和 uid 字段，排除 _id 字段
+    const formattedOrders = orders.map(order => ({
+      userId: order.userId,
+      name: order.itemId.name,        // 直接将 itemId 的 name 字段放到外面
+      iconID: order.itemId.iconID,    // 直接将 itemId 的 iconID 字段放到外面
+      status: order.status,
+      jin: order.jin,
+      yin: order.yin,
+      tong: order.tong,
+      ress: order.ress,
+      totalValue: order.totalValue,
+      createdAt: order.createdAt
+    }));
+    res.status(200).json(formattedOrders);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
