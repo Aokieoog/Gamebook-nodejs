@@ -215,9 +215,10 @@ router.get('/orderInquiry', async (req, res) => {
   try {
     // 确保查询条件是对象形式 { userId: userId }
     const orders = await Order.find({ userId }) // 查询条件正确格式化
-    .select('-_id -__v')  
+    .select('-__v')  
     .populate('itemId', 'name iconID -_id');    // populate 返回 name 和 uid 字段，排除 _id 字段
     const formattedOrders = orders.map(order => ({
+      orderId: order._id,
       userId: order.userId,
       name: order.itemId.name,        // 直接将 itemId 的 name 字段放到外面
       iconID: order.itemId.iconID,    // 直接将 itemId 的 iconID 字段放到外面
@@ -230,6 +231,23 @@ router.get('/orderInquiry', async (req, res) => {
       createdAt: order.createdAt
     }));
     res.status(200).json(formattedOrders);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 删除订单
+router.delete('/delorders/:id', async (req, res) => {
+  
+  const { id } = req.params;
+  console.log('Deleting order with ID:', id);
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ error: 'Invalid order ID format' });
+  }
+  console.log(id);
+  try {
+    await Order.findByIdAndDelete(id);
+    res.status(204).send();
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
