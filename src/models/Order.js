@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const SoldOrder = require('./SoldOrder');
 
 const orderSchema = new mongoose.Schema({
   userId: { type: String, required: true },
@@ -9,13 +10,17 @@ const orderSchema = new mongoose.Schema({
   jin: { type: Number, default: 0 }, // 金币，默认值为 0
   yin: { type: Number, default: 0 }, // 银币，默认值为 0
   tong: { type: Number, default: 0 }, // 铜币，默认值为 0
-  ress: { type: Number, required: true, default: 1 }, // 物品数量，必填字段，默认值为 1
-  totalValue: { type: Number, default: 0 } // 总价值，存储为字段
+  ress: { type: Number, required: true, default: 1 },
+  stock: { type: Number, default: 0 }, // 库存，默认值为 0
+  totalValue: { type: Number, default: 0 }, // 总价值，存储为字段
 });
 
 // 方法：自动计算并更新 totalValue
-orderSchema.pre('save', function (next) {
-  // 计算总价值：1 金 = 10000 铜，1 银 = 100 铜
+orderSchema.pre('save', async function (next) {
+  if (!this.isNew) {
+    return next(); // 如果是更新操作，跳过 totalValue 计算
+  }
+  // this.stock = this.ress;
   this.totalValue = (this.jin * 10000 + this.yin * 100 + this.tong) * this.ress;
   next();
 });

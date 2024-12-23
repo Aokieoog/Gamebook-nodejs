@@ -1,12 +1,12 @@
 const express = require('express');
+const router = express.Router();
+const { sendMail } = require('../services/emailService'); // 引用邮件模块
+const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const User = require('../models/User');
 const Item = require('../models/Item');
 const Order = require('../models/Order');
-const router = express.Router();
-const jwt = require('jsonwebtoken');
-const crypto = require('crypto');
-const { sendMail } = require('../services/emailService'); // 引用邮件模块
-const { Op } = require('sequelize');
+const SoldOrder = require('../models/SoldOrder');
 
 // 创建用户
 router.post('/users', async (req, res) => {
@@ -186,7 +186,8 @@ router.post('/orders', async (req, res) => {
       jin: jin || 0,
       yin: yin || 0,
       tong: tong || 0,
-      ress: quantity || 1
+      ress: quantity || 1,
+      stock: quantity
     });
     const savedOrder = await newOrder.save();
     const populatedOrder = await Order.findById(savedOrder._id)
@@ -199,9 +200,10 @@ router.post('/orders', async (req, res) => {
         yin: savedOrder.yin,
         tong: savedOrder.tong,
         ress: savedOrder.ress,
-        totalValue:savedOrder.totalValue,
+        totalValue: savedOrder.totalValue,
         createdAt: savedOrder.createdAt,
-        item: populatedOrder.itemId // 返回填充后的 item 数据
+        item: populatedOrder.itemId, // 返回填充后的 item 数据
+        stock: savedOrder.stock
       }
     });
   } catch (err) {
@@ -215,8 +217,8 @@ router.get('/orderInquiry', async (req, res) => {
   try {
     // 确保查询条件是对象形式 { userId: userId }
     const orders = await Order.find({ userId }) // 查询条件正确格式化
-    .select('-__v')  
-    .populate('itemId', 'name iconID -_id');    // populate 返回 name 和 uid 字段，排除 _id 字段
+      .select('-__v')
+      .populate('itemId', 'name iconID -_id');    // populate 返回 name 和 uid 字段，排除 _id 字段
     const formattedOrders = orders.map(order => ({
       orderId: order._id,
       userId: order.userId,
@@ -227,8 +229,10 @@ router.get('/orderInquiry', async (req, res) => {
       yin: order.yin,
       tong: order.tong,
       ress: order.ress,
+      stock: order.stock,
       totalValue: order.totalValue,
-      createdAt: order.createdAt
+      createdAt: order.createdAt,
+      orderTotalRevenue:order.orderTotalRevenue
     }));
     res.status(200).json(formattedOrders);
   } catch (err) {
@@ -237,19 +241,106 @@ router.get('/orderInquiry', async (req, res) => {
 });
 
 // 删除订单
-router.delete('/delorders/:id', async (req, res) => {
-  
-  const { id } = req.params;
-  console.log('Deleting order with ID:', id);
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    return res.status(400).json({ error: 'Invalid order ID format' });
+router.delete('/delorders', async (req, res) => {
+  const { id } = req.query;
+  // 参数验证
+  if (!id) {
+    return res.status(400).json({ error: '订单未找到' });
   }
-  console.log(id);
   try {
-    await Order.findByIdAndDelete(id);
-    res.status(204).send();
+    // 数据库删除操作
+    const result = await Order.findByIdAndDelete(id);
+    if (!result) {
+      return res.status(404).json({ error: '订单未找到' });
+    }
+    res.status(204).send(); // 删除成功响应
   } catch (err) {
+    console.error('Error:', err);  // 捕获错误并输出
     res.status(500).json({ error: err.message });
+  }
+});
+
+// 出售订单的接口
+router.post('/order/sell', async (req, res) => {
+  // 价格计算函数
+  const calculatePrice = (jin, yin, tong) => {
+    return (+jin * 10000) + (+yin * 100) + (+tong);
+  };
+  try {
+    const { orderId, sellPrice } = req.body;
+    const order = await Order.findById(orderId);
+    // 创建新的 SoldOrder 实例
+    const price = calculatePrice(sellPrice.jin, sellPrice.yin, sellPrice.tong); // 价格转换
+    const data = new SoldOrder({
+      orderId: orderId, // 根据需求提取商品信息
+      quantity: sellPrice.quantity,
+      price: price
+    });
+    // 比较 quantity 和 stock 数量
+    if (sellPrice.quantity > order.stock) {
+      return res.status(200).json({ code:'400',message: '出售数量大于库存数量' });
+    }
+    order.stock -= sellPrice.quantity;
+    // 保存到数据库
+    await order.save();
+    await data.save();
+    // 返回响应，包括 totalRevenue 和 formattedDateSold
+    res.status(200).json({
+      message: '订单成功售出',
+      code: 200,
+      data: data.toJSON()  // 使用 toJSON() 确保正确的格式
+    });
+  } catch (err) {
+    console.error('处理订单时出错:', err);
+    res.status(500).json({ message: '处理订单时出错', error: err.message });
+  }
+});
+
+// 查询已售订单
+router.get('/order/query', async (req, res) => {
+  const { orderId } = req.query;
+  try {
+    if (!orderId) {
+      return res.status(400).json({ message: '订单 ID 不能为空' });
+    }
+    const soldOrders = await SoldOrder.find({ orderId: orderId })
+    
+    res.status(200).json(soldOrders);
+  } catch (err) {
+    console.error('查询已售订单时出错:', err);
+    res.status(500).json({ message: '查询已售订单时出错', error: err.message });
+  }
+});
+
+router.delete('/order/delete', async (req, res) => {
+  try {
+    const { id ,stock } = req.query;
+
+    // 检查是否提供了订单 ID
+    if (!id) {
+      return res.status(400).json({ message: '订单 ID 不能为空' });
+    }
+    // 删除订单
+    const result = await SoldOrder.findOneAndDelete({ _id: id });
+    // 如果找不到订单
+    if (!result) {
+      return res.status(404).json({ error: '订单未找到' });
+    }
+    // 如果传入了 stock 参数，更新对应库存
+    if (stock && !isNaN(stock)) {
+      const stockValue = parseInt(stock, 10); // 转换为整数
+      const order = await Order.findOne({ _id: result.orderId }); // 根据已售订单的 orderId 找到对应订单
+      if (order) {
+        order.stock += stockValue; // 增加库存
+        await order.save(); // 保存更改
+      } else {
+        console.error(`未找到对应的订单，订单 ID: ${result.orderId}`);
+      }
+    }
+    // 返回成功消息
+    res.status(200).json({ message: '已售订单删除成功' });
+  } catch (err) {
+    res.status(500).json({ error: '服务器内部错误，请稍后重试' });
   }
 });
 
