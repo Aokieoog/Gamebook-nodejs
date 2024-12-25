@@ -203,7 +203,8 @@ router.post('/orders', async (req, res) => {
         totalValue: savedOrder.totalValue,
         createdAt: savedOrder.createdAt,
         item: populatedOrder.itemId, // 返回填充后的 item 数据
-        stock: savedOrder.stock
+        stock: savedOrder.stock,
+        orderTotalRevenue: savedOrder.orderTotalRevenue
       }
     });
   } catch (err) {
@@ -232,7 +233,7 @@ router.get('/orderInquiry', async (req, res) => {
       stock: order.stock,
       totalValue: order.totalValue,
       createdAt: order.createdAt,
-      orderTotalRevenue:order.orderTotalRevenue
+      orderTotalRevenue: order.orderTotalRevenue
     }));
     res.status(200).json(formattedOrders);
   } catch (err) {
@@ -278,7 +279,7 @@ router.post('/order/sell', async (req, res) => {
     });
     // 比较 quantity 和 stock 数量
     if (sellPrice.quantity > order.stock) {
-      return res.status(200).json({ code:'400',message: '出售数量大于库存数量' });
+      return res.status(200).json({ code: '400', message: '出售数量大于库存数量' });
     }
     order.stock -= sellPrice.quantity;
     // 保存到数据库
@@ -304,7 +305,7 @@ router.get('/order/query', async (req, res) => {
       return res.status(400).json({ message: '订单 ID 不能为空' });
     }
     const soldOrders = await SoldOrder.find({ orderId: orderId })
-    
+
     res.status(200).json(soldOrders);
   } catch (err) {
     console.error('查询已售订单时出错:', err);
@@ -314,7 +315,7 @@ router.get('/order/query', async (req, res) => {
 
 router.delete('/order/delete', async (req, res) => {
   try {
-    const { id ,stock } = req.query;
+    const { id, stock } = req.query;
 
     // 检查是否提供了订单 ID
     if (!id) {
@@ -343,5 +344,31 @@ router.delete('/order/delete', async (req, res) => {
     res.status(500).json({ error: '服务器内部错误，请稍后重试' });
   }
 });
+
+// 添加售出总和
+router.post('/addOrderTotal', async (req, res) => {
+  try {
+    const { orderId, orderTotalRevenue } = req.body;
+    // 查找订单实例
+    // 使用 findById 查找订单
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+    // 更新 orderTotalRevenue 字段
+    order.orderTotalRevenue = orderTotalRevenue;
+    await order.save();
+    res.status(200).json({
+      message: 'Order total revenue updated successfully',
+      order,
+    });
+  } catch (error) {
+    console.error('Error updating order total revenue:', error);
+    res.status(500).json({
+      message: 'Internal server error',
+      error: error.message,
+    });
+  }
+})
 
 module.exports = router;

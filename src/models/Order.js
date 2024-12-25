@@ -13,6 +13,7 @@ const orderSchema = new mongoose.Schema({
   ress: { type: Number, required: true, default: 1 },
   stock: { type: Number, default: 0 }, // 库存，默认值为 0
   totalValue: { type: Number, default: 0 }, // 总价值，存储为字段
+  orderTotalRevenue: { type: Number, default: 0 }, // 总售价，存储为字段
 });
 
 // 方法：自动计算并更新 totalValue
