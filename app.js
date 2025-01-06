@@ -7,10 +7,10 @@ const apiRoutes = require('./src/routes/api');
 const app = express();
 const PORT = process.env.PORT;
 const authMiddleware = require('./src/services/authMiddleware');
-// const corsMiddleware = require('./src/services/cors');
+const corsMiddleware = require('./src/services/cors');
 const cookieParser = require('cookie-parser'); // 解析 cookie
 
-// app.use(corsMiddleware); // 使用 CORS 中间件
+app.use(corsMiddleware); // 使用 CORS 中间件
 
 app.use(cookieParser()); // 使用 cookie 中间件
 
