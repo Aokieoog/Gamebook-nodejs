@@ -11,7 +11,11 @@ const authMiddleware = require('./src/services/authMiddleware');
 // const corsMiddleware = require('./src/services/cors');
 const cookieParser = require('cookie-parser'); // 解析 cookie
 
-app.use(cors());
+// 配置 CORS
+app.use(cors({
+  origin: '*', // 允许所有来源
+  methods: ['GET', 'POST', 'PUT', 'DELETE'], // 允许的请求方法
+}));
 // app.use(corsMiddleware); // 使用 CORS 中间件
 
 app.use(cookieParser()); // 使用 cookie 中间件
