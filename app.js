@@ -4,12 +4,14 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const apiRoutes = require('./src/routes/api');
+const cors = require('cors');
 const app = express();
 const PORT = process.env.PORT;
 const authMiddleware = require('./src/services/authMiddleware');
 // const corsMiddleware = require('./src/services/cors');
 const cookieParser = require('cookie-parser'); // 解析 cookie
 
+app.use(cors());
 // app.use(corsMiddleware); // 使用 CORS 中间件
 
 app.use(cookieParser()); // 使用 cookie 中间件
