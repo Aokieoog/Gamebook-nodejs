@@ -7,7 +7,11 @@ const apiRoutes = require('./src/routes/api');
 const app = express();
 const PORT = process.env.PORT;
 const authMiddleware = require('./src/services/authMiddleware');
+const corsMiddleware = require('./src/services/cors');
 const cookieParser = require('cookie-parser'); // 解析 cookie
+
+app.use(corsMiddleware); // 使用 CORS 中间件
+
 app.use(cookieParser()); // 使用 cookie 中间件
 
 // 连接 MongoDB
@@ -20,18 +24,10 @@ mongoose.connect(process.env.MONGO_URI, {
 // 中间件
 app.use(bodyParser.json());
 
-app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', req.headers.origin||'https://jx.ieoog.com');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  next();
-});
-
-
 // 路由
 app.use(authMiddleware);
 app.use('/api', apiRoutes);
+
 
 // 启动服务器
 app.listen(PORT,'0.0.0.0', () => {
