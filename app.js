@@ -13,7 +13,7 @@ const cookieParser = require('cookie-parser'); // 解析 cookie
 
 // 配置 CORS
 app.use(cors({
-  origin: '*', // 允许所有来源
+  origin: 'https://jx.ieoog.com', // 允许所有来源
   methods: ['GET', 'POST', 'PUT', 'DELETE'], // 允许的请求方法
   allowedHeaders: ['Content-Type', 'Authorization'], // 允许的自定义头
   credentials: true, // 允许携带 Cookie
