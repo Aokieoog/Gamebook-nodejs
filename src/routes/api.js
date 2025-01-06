@@ -19,17 +19,25 @@ router.post('/users', async (req, res) => {
 
     if (existingUser) {
       if (existingUser.loginAccount === loginAccount) {
-        return res.status(409).json({ error: '登录账号已存在' });
+        return res.status(200).json({ 
+          code: 401,
+          message: '登录账号已存在' });
       }
       if (existingUser.email === email) {
-        return res.status(409).json({ error: '邮箱已存在' });
+        return res.status(200).json({ 
+          code: 402,
+          message: '邮箱已存在' });
       }
     }
     // 创建新用户
     await User.create(req.body);
-    res.status(201).json({ success: '用户创建成功' });
+    res.status(200).json({ 
+      code: 200,
+      message: '用户创建成功' });
   } catch (err) {
-    res.status(500).json({ error: '服务器错误，请稍后再试' });
+    res.status(200).json({ 
+      code: 500,
+      message: '服务器错误，请稍后再试' });
   }
 });
 
@@ -40,12 +48,16 @@ router.post('/login', async (req, res) => {
     // 查找用户
     const user = await User.findOne({ loginAccount });
     if (!user) {
-      return res.status(401).json({ error: '用户不存在' });
+      return res.status(200).json({ 
+        code: 401,
+        message: '用户不存在' });
     }
     // 验证密码
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      return res.status(402).json({ error: '密码错误' });
+      return res.status(200).json({ 
+        code: 402,
+        message: '密码错误' });
     }
     // 生成 JWT（可选）
     const token = jwt.sign(
@@ -53,7 +65,8 @@ router.post('/login', async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: '72h' }
     );
-    res.status(201).json({
+    res.status(200).json({
+      code: 200,
       message: '登录成功',
       token, // 返回 token
       user: {
@@ -63,7 +76,9 @@ router.post('/login', async (req, res) => {
       }
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(200).json({ 
+      code: 500,
+      message: err.message });
   }
 });
 
@@ -74,24 +89,36 @@ router.post('/change-password', async (req, res) => {
     // 查找用户
     const user = await User.findOne({ loginAccount });
     if (!user) {
-      return res.status(201).json({ error: '用户不存在' });
+      return res.status(200).json({ 
+        code: 401,
+        message: '用户不存在' });
     }
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      return res.status(201).json({ error: '原密码错误' });
+      return res.status(200).json({ 
+        code: 402,
+        message: '原密码错误' });
     }
     if (!newPassword) {
-      return res.status(201).json({ error: '请输入新密码' });
+      return res.status(200).json({ 
+        code: 403,
+        message: '请输入新密码' });
     }
     if (newPassword == password) {
-      return res.status(201).json({ error: '新密码与原密码一致' });
+      return res.status(200).json({ 
+        code: 404,
+        message: '新密码与原密码一致' });
     }
     // 更新密码
     user.password = newPassword;
     await user.save();
-    res.status(201).json({ success: '密码修改成功' });
+    res.status(200).json({ 
+      code: 200,
+      message: '密码修改成功' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(200).json({ 
+      code: 500,
+      message: err.message });
   }
 })
 
@@ -101,7 +128,9 @@ router.post('/forget-password', async (req, res) => {
   try {
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(401).json({ error: '用户不存在' });
+      return res.status(200).json({ 
+        code: 401,
+        message: '用户不存在' });
     }
     const resetToken = crypto.randomBytes(32).toString('hex'); // 这里生成实际的重置令牌
     const resetUrl = `http://localhost:3000/reset-password/${resetToken}`;
@@ -118,9 +147,13 @@ router.post('/forget-password', async (req, res) => {
       一小时后过期：\n
       ${resetUrl}`
     );
-    res.status(201).json({ success: '邮件已发送' });
+    res.status(200).json({ 
+      code: 200,
+      message: '邮件已发送' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(200).json({ 
+      code: 500,
+      message: err.message });
   }
 })
 
@@ -136,16 +169,22 @@ router.post('/reset-password/:token', async (req, res) => {
       resetTokenExpiry: { $gt: Date.now() } // 检查令牌是否过期
     });
     if (!user) {
-      return res.status(201).json({ error: '无效的或已过期的令牌' });
+      return res.status(200).json({ 
+        code: 401,
+        message: '无效的或已过期的令牌' });
     }
     // 更新密码
     user.password = newPassword; // 注意加密密码
     user.resetToken = undefined; // 清除令牌
     user.resetTokenExpiry = undefined;
     await user.save();
-    res.status(201).json({ message: '密码已成功重置' });
+    res.status(200).json({ 
+      code: 200,
+      message: '密码已成功重置' });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(200).json({ 
+      code: 500,
+      message: error.message });
   }
 });
 
@@ -155,7 +194,9 @@ router.get('/items', async (req, res) => {
     const { name } = req.query;
     // 参数校验
     if (!name || name.trim() === '') {
-      return res.status(400).json({ error: 'Name parameter is required' });
+      return res.status(200).json({ 
+        code:400,
+        items: 'Name parameter is required' });
     }
     // 模糊查询
     const items = await Item.find({
@@ -164,7 +205,9 @@ router.get('/items', async (req, res) => {
     res.status(200).json(items);
   } catch (err) {
     console.error(err); // 日志记录
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(200).json({ 
+      code: 500,
+      message: 'Internal server error' });
   }
 });
 
@@ -174,10 +217,14 @@ router.post('/orders', async (req, res) => {
     const { userId, itemId, jin, yin, tong, quantity } = req.body;
     // 验证必填字段
     if (!userId) {
-      return res.status(400).json({ error: 'userId 是必填字段' });
+      return res.status(200).json({ 
+        code: 400,
+        message: 'userId 是必填字段' });
     }
     if (!itemId) {
-      return res.status(400).json({ error: 'itemId 是必填字段' });
+      return res.status(200).json({ 
+        code: 400,
+        message: 'itemId 是必填字段' });
     }
     // 创建订单
     const newOrder = new Order({
@@ -192,7 +239,8 @@ router.post('/orders', async (req, res) => {
     const savedOrder = await newOrder.save();
     const populatedOrder = await Order.findById(savedOrder._id)
       .populate('itemId', 'name iconID'); // 填充 itemId，并指定只返回字段 name 和 price
-    res.status(201).json({
+    res.status(200).json({
+      code: 200,
       message: '订单添加成功',
       order: {
         orderid: savedOrder._id,
@@ -208,7 +256,9 @@ router.post('/orders', async (req, res) => {
       }
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(200).json({ 
+      code: 500,
+      message: err.message });
   }
 });
 
@@ -235,7 +285,8 @@ router.get('/orderInquiry', async (req, res) => {
       createdAt: order.createdAt,
       orderTotalRevenue: order.orderTotalRevenue
     }));
-    res.status(200).json(formattedOrders);
+    res.status(200).json(
+      formattedOrders);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
