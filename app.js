@@ -7,13 +7,19 @@ const apiRoutes = require('./src/routes/api');
 const app = express();
 const PORT = process.env.PORT;
 const authMiddleware = require('./src/services/authMiddleware');
-const corsMiddleware = require('./src/services/cors');
+// const corsMiddleware = require('./src/services/cors');
 const cookieParser = require('cookie-parser'); // 解析 cookie
 
-app.use(corsMiddleware); // 使用 CORS 中间件
+// app.use(corsMiddleware); // 使用 CORS 中间件
 
 app.use(cookieParser()); // 使用 cookie 中间件
 
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*'); // 允许所有域名
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE'); // 允许的 HTTP 方法
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization'); // 允许的自定义头
+  next();
+});
 // 连接 MongoDB
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
