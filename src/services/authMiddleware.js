@@ -7,8 +7,8 @@ function authMiddleware(req, res, next) {
     return next(); // 放行免验证路径
   }
   // 从 cookie 中获取 Token
-  const token = req.headers['authorization']
-  // const token = req.cookies['access_tokenbook'];
+  // const token = req.headers['authorization']
+  const token = req.cookies['access_tokenbook'];
   if (!token) {
     // 如果没有 Token，返回未授权
     return res.status(401).json({ error: '未授权: 未提供令牌' });

@@ -16,6 +16,7 @@ app.use(cors({
   origin: '*', // 允许所有来源
   methods: ['GET', 'POST', 'PUT', 'DELETE'], // 允许的请求方法
   allowedHeaders: ['Content-Type', 'Authorization'], // 允许的自定义头
+  credentials: true, // 允许携带 Cookie
 }));
 // app.use(corsMiddleware); // 使用 CORS 中间件
 
