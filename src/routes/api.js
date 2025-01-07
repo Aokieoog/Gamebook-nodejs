@@ -229,6 +229,7 @@ router.post('/orders', async (req, res) => {
     // 创建订单
     const newOrder = new Order({
       userId,
+      item: itemId,
       jin: jin || 0,
       yin: yin || 0,
       tong: tong || 0,
@@ -249,7 +250,7 @@ router.post('/orders', async (req, res) => {
         ress: savedOrder.ress,
         totalValue: savedOrder.totalValue,
         createdAt: savedOrder.createdAt,
-        item: populatedOrder.item, // 返回填充后的 item 数据
+        itemdata: populatedOrder.item, // 返回填充后的 item 数据
         stock: savedOrder.stock,
         orderTotalRevenue: savedOrder.orderTotalRevenue
       }
