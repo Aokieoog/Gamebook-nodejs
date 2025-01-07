@@ -19,25 +19,29 @@ router.post('/users', async (req, res) => {
 
     if (existingUser) {
       if (existingUser.loginAccount === loginAccount) {
-        return res.status(200).json({ 
+        return res.status(200).json({
           code: 401,
-          message: '登录账号已存在' });
+          message: '登录账号已存在'
+        });
       }
       if (existingUser.email === email) {
-        return res.status(200).json({ 
+        return res.status(200).json({
           code: 402,
-          message: '邮箱已存在' });
+          message: '邮箱已存在'
+        });
       }
     }
     // 创建新用户
     await User.create(req.body);
-    res.status(200).json({ 
+    res.status(200).json({
       code: 200,
-      message: '用户创建成功' });
+      message: '用户创建成功'
+    });
   } catch (err) {
-    res.status(200).json({ 
+    res.status(200).json({
       code: 500,
-      message: '服务器错误，请稍后再试' });
+      message: '服务器错误，请稍后再试'
+    });
   }
 });
 
@@ -48,16 +52,18 @@ router.post('/login', async (req, res) => {
     // 查找用户
     const user = await User.findOne({ loginAccount });
     if (!user) {
-      return res.status(200).json({ 
+      return res.status(200).json({
         code: 401,
-        message: '用户不存在' });
+        message: '用户不存在'
+      });
     }
     // 验证密码
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      return res.status(200).json({ 
+      return res.status(200).json({
         code: 402,
-        message: '密码错误' });
+        message: '密码错误'
+      });
     }
     // 生成 JWT（可选）
     const token = jwt.sign(
@@ -76,9 +82,10 @@ router.post('/login', async (req, res) => {
       }
     });
   } catch (err) {
-    res.status(200).json({ 
+    res.status(200).json({
       code: 500,
-      message: err.message });
+      message: err.message
+    });
   }
 });
 
@@ -89,36 +96,42 @@ router.post('/change-password', async (req, res) => {
     // 查找用户
     const user = await User.findOne({ loginAccount });
     if (!user) {
-      return res.status(200).json({ 
+      return res.status(200).json({
         code: 401,
-        message: '用户不存在' });
+        message: '用户不存在'
+      });
     }
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      return res.status(200).json({ 
+      return res.status(200).json({
         code: 402,
-        message: '原密码错误' });
+        message: '原密码错误'
+      });
     }
     if (!newPassword) {
-      return res.status(200).json({ 
+      return res.status(200).json({
         code: 403,
-        message: '请输入新密码' });
+        message: '请输入新密码'
+      });
     }
     if (newPassword == password) {
-      return res.status(200).json({ 
+      return res.status(200).json({
         code: 404,
-        message: '新密码与原密码一致' });
+        message: '新密码与原密码一致'
+      });
     }
     // 更新密码
     user.password = newPassword;
     await user.save();
-    res.status(200).json({ 
+    res.status(200).json({
       code: 200,
-      message: '密码修改成功' });
+      message: '密码修改成功'
+    });
   } catch (err) {
-    res.status(200).json({ 
+    res.status(200).json({
       code: 500,
-      message: err.message });
+      message: err.message
+    });
   }
 })
 
@@ -128,9 +141,10 @@ router.post('/forget-password', async (req, res) => {
   try {
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(200).json({ 
+      return res.status(200).json({
         code: 401,
-        message: '用户不存在' });
+        message: '用户不存在'
+      });
     }
     const resetToken = crypto.randomBytes(32).toString('hex'); // 这里生成实际的重置令牌
     const resetUrl = `http://localhost:3000/reset-password/${resetToken}`;
@@ -147,13 +161,15 @@ router.post('/forget-password', async (req, res) => {
       一小时后过期：\n
       ${resetUrl}`
     );
-    res.status(200).json({ 
+    res.status(200).json({
       code: 200,
-      message: '邮件已发送' });
+      message: '邮件已发送'
+    });
   } catch (err) {
-    res.status(200).json({ 
+    res.status(200).json({
       code: 500,
-      message: err.message });
+      message: err.message
+    });
   }
 })
 
@@ -169,22 +185,25 @@ router.post('/reset-password/:token', async (req, res) => {
       resetTokenExpiry: { $gt: Date.now() } // 检查令牌是否过期
     });
     if (!user) {
-      return res.status(200).json({ 
+      return res.status(200).json({
         code: 401,
-        message: '无效的或已过期的令牌' });
+        message: '无效的或已过期的令牌'
+      });
     }
     // 更新密码
     user.password = newPassword; // 注意加密密码
     user.resetToken = undefined; // 清除令牌
     user.resetTokenExpiry = undefined;
     await user.save();
-    res.status(200).json({ 
+    res.status(200).json({
       code: 200,
-      message: '密码已成功重置' });
+      message: '密码已成功重置'
+    });
   } catch (error) {
-    res.status(200).json({ 
+    res.status(200).json({
       code: 500,
-      message: error.message });
+      message: error.message
+    });
   }
 });
 
@@ -194,9 +213,10 @@ router.get('/items', async (req, res) => {
     const { name } = req.query;
     // 参数校验
     if (!name || name.trim() === '') {
-      return res.status(200).json({ 
-        code:400,
-        items: 'Name parameter is required' });
+      return res.status(200).json({
+        code: 400,
+        items: 'Name parameter is required'
+      });
     }
     // 模糊查询
     const items = await Item.find({
@@ -205,9 +225,10 @@ router.get('/items', async (req, res) => {
     res.status(200).json(items);
   } catch (err) {
     console.error(err); // 日志记录
-    res.status(200).json({ 
+    res.status(200).json({
       code: 500,
-      message: 'Internal server error' });
+      message: 'Internal server error'
+    });
   }
 });
 
@@ -217,14 +238,16 @@ router.post('/orders', async (req, res) => {
     const { userId, itemId, jin, yin, tong, quantity } = req.body;
     // 验证必填字段
     if (!userId) {
-      return res.status(200).json({ 
+      return res.status(200).json({
         code: 400,
-        message: 'userId 是必填字段' });
+        message: 'userId 是必填字段'
+      });
     }
     if (!itemId) {
-      return res.status(200).json({ 
+      return res.status(200).json({
         code: 400,
-        message: 'itemId 是必填字段' });
+        message: 'itemId 是必填字段'
+      });
     }
     // 创建订单
     const newOrder = new Order({
@@ -239,7 +262,7 @@ router.post('/orders', async (req, res) => {
     const savedOrder = await newOrder.save();
     const populatedOrder = await Order.findById(savedOrder._id)
       .populate('item', 'name iconID -_id'); // 填充 item，并指定只返回字段 name 和 price
-    console.log('populatedOrder',populatedOrder);
+    console.log('populatedOrder', populatedOrder);
     res.status(200).json({
       code: 200,
       message: '订单添加成功',
@@ -257,9 +280,10 @@ router.post('/orders', async (req, res) => {
       }
     });
   } catch (err) {
-    res.status(200).json({ 
+    res.status(200).json({
       code: 500,
-      message: err.message });
+      message: err.message
+    });
   }
 });
 
@@ -267,28 +291,33 @@ router.post('/orders', async (req, res) => {
 router.get('/orderInquiry', async (req, res) => {
   const { userId } = req.query;
   try {
-    const orders = await Order.find({ userId })
-      .select('-__v')
-      .populate('item', 'name iconID -_id');
+    const orders = await Order.find({ userId }).select('-__v');
 
-    const formattedOrders = orders.map(order => {
-      const item = order.item; // 如果 item 为 null，则使用空对象
-      return {
-        orderId: order._id,
-        userId: order.userId,
-        name: item.name, // 如果 name 为 undefined，则使用默认值
-        iconID: item.iconID, // 如果 iconID 为 undefined，则使用默认值
-        status: order.status,
-        jin: order.jin,
-        yin: order.yin,
-        tong: order.tong,
-        ress: order.ress,
-        stock: order.stock,
-        totalValue: order.totalValue,
-        createdAt: order.createdAt,
-        orderTotalRevenue: order.orderTotalRevenue
-      };
-    });
+
+    // 手动查询每个 order 的 item 信息
+    const formattedOrders = await Promise.all(
+      orders.map(async (order) => {
+        const item = order.item
+          ? await Item.findOne({ _id: order.item }).select('name iconID -_id') // 手动查询对应的 item 信息
+          : {}; // 如果没有 item，使用空对象代替
+
+        return {
+          orderId: order._id,
+          userId: order.userId,
+          name: item?.name || '默认名称', // 如果 item 不存在或字段为 undefined，使用默认值
+          iconID: item?.iconID || '340',
+          status: order.status,
+          jin: order.jin,
+          yin: order.yin,
+          tong: order.tong,
+          ress: order.ress,
+          stock: order.stock,
+          totalValue: order.totalValue,
+          createdAt: order.createdAt,
+          orderTotalRevenue: order.orderTotalRevenue,
+        };
+      })
+    );
 
     res.status(200).json(formattedOrders);
   } catch (err) {
