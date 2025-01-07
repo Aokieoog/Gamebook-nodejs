@@ -266,27 +266,30 @@ router.post('/orders', async (req, res) => {
 router.get('/orderInquiry', async (req, res) => {
   const { userId } = req.query;
   try {
-    // 确保查询条件是对象形式 { userId: userId }
-    const orders = await Order.find({ userId }) // 查询条件正确格式化
+    const orders = await Order.find({ userId })
       .select('-__v')
-      .populate('itemId', 'name iconID -_id');    // populate 返回 name 和 uid 字段，排除 _id 字段
-    const formattedOrders = orders.map(order => ({
-      orderId: order._id,
-      userId: order.userId,
-      name: order.itemId.name,        // 直接将 itemId 的 name 字段放到外面
-      iconID: order.itemId.iconID,    // 直接将 itemId 的 iconID 字段放到外面
-      status: order.status,
-      jin: order.jin,
-      yin: order.yin,
-      tong: order.tong,
-      ress: order.ress,
-      stock: order.stock,
-      totalValue: order.totalValue,
-      createdAt: order.createdAt,
-      orderTotalRevenue: order.orderTotalRevenue
-    }));
-    res.status(200).json(
-      formattedOrders);
+      .populate('itemId', 'name iconID -_id');
+
+    const formattedOrders = orders.map(order => {
+      const item = order.itemId || {}; // 如果 itemId 为 null，则使用空对象
+      return {
+        orderId: order._id,
+        userId: order.userId,
+        name: item.name || '未知物品', // 如果 name 为 undefined，则使用默认值
+        iconID: item.iconID || '未知图标', // 如果 iconID 为 undefined，则使用默认值
+        status: order.status,
+        jin: order.jin,
+        yin: order.yin,
+        tong: order.tong,
+        ress: order.ress,
+        stock: order.stock,
+        totalValue: order.totalValue,
+        createdAt: order.createdAt,
+        orderTotalRevenue: order.orderTotalRevenue
+      };
+    });
+
+    res.status(200).json(formattedOrders);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
