@@ -229,7 +229,6 @@ router.post('/orders', async (req, res) => {
     // 创建订单
     const newOrder = new Order({
       userId,
-      itemId,
       jin: jin || 0,
       yin: yin || 0,
       tong: tong || 0,
