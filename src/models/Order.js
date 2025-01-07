@@ -42,4 +42,4 @@ orderSchema.methods.normalizeCurrency = function () {
 };
 
 
-module.exports = mongoose.model('Orders', orderSchema);
+module.exports = mongoose.model('Order', orderSchema);
