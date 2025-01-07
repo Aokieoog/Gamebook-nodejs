@@ -238,7 +238,8 @@ router.post('/orders', async (req, res) => {
     });
     const savedOrder = await newOrder.save();
     const populatedOrder = await Order.findById(savedOrder._id)
-      .populate('item', 'name iconID'); // 填充 itemId，并指定只返回字段 name 和 price
+      .populate('item', 'name iconID -_id'); // 填充 item，并指定只返回字段 name 和 price
+    console.log('populatedOrder',populatedOrder);
     res.status(200).json({
       code: 200,
       message: '订单添加成功',
@@ -268,15 +269,15 @@ router.get('/orderInquiry', async (req, res) => {
   try {
     const orders = await Order.find({ userId })
       .select('-__v')
-      .populate('itemId', 'name iconID -_id');
+      .populate('item', 'name iconID -_id');
 
     const formattedOrders = orders.map(order => {
-      const item = order.itemId || {}; // 如果 itemId 为 null，则使用空对象
+      const item = order.item; // 如果 item 为 null，则使用空对象
       return {
         orderId: order._id,
         userId: order.userId,
-        name: item.name || '未知物品', // 如果 name 为 undefined，则使用默认值
-        iconID: item.iconID || '未知图标', // 如果 iconID 为 undefined，则使用默认值
+        name: item.name, // 如果 name 为 undefined，则使用默认值
+        iconID: item.iconID, // 如果 iconID 为 undefined，则使用默认值
         status: order.status,
         jin: order.jin,
         yin: order.yin,
