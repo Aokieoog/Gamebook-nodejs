@@ -3,7 +3,7 @@ const SoldOrder = require('./SoldOrder');
 
 const orderSchema = new mongoose.Schema({
   userId: { type: String, required: true },
-  itemId: { type: mongoose.Schema.Types.ObjectId, ref: 'Item', required: true }, // 单一物品 ID
+  item: { type: mongoose.Schema.Types.ObjectId, ref: 'Item', required: true }, // 单一物品 ID
   status: { type: String, default: 'pending' }, // 状态：pending | completed
   createdAt: { type: Date, default: Date.now },
   // 以下是物品相关的字段

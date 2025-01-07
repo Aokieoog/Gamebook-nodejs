@@ -238,7 +238,7 @@ router.post('/orders', async (req, res) => {
     });
     const savedOrder = await newOrder.save();
     const populatedOrder = await Order.findById(savedOrder._id)
-      .populate('itemId', 'name iconID'); // 填充 itemId，并指定只返回字段 name 和 price
+      .populate('item', 'name iconID'); // 填充 itemId，并指定只返回字段 name 和 price
     res.status(200).json({
       code: 200,
       message: '订单添加成功',
@@ -250,7 +250,7 @@ router.post('/orders', async (req, res) => {
         ress: savedOrder.ress,
         totalValue: savedOrder.totalValue,
         createdAt: savedOrder.createdAt,
-        item: populatedOrder.itemId, // 返回填充后的 item 数据
+        item: populatedOrder.item, // 返回填充后的 item 数据
         stock: savedOrder.stock,
         orderTotalRevenue: savedOrder.orderTotalRevenue
       }
