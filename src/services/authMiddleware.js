@@ -1,11 +1,14 @@
 const jwt = require('jsonwebtoken');
-const noAuthPaths = ['/api/users', '/api/login', '/api/forget-password'];
+// const noAuthPaths = ['/api/users', '/api/login', '/api/forget-password'];
 
 function authMiddleware(req, res, next) {
   // 检查是否是免验证路径
-  if (noAuthPaths.some(path => req.path.startsWith(path))) {
-    return next(); // 放行免验证路径
+  const allowedPaths = [/\/api\/users$/, /\/api\/login$/, /\/api\/forget-password$/]; // 使用正则表达式精确匹配
+
+  if (allowedPaths.some(path => path.test(req.path))) {
+    return next();
   }
+  
   // 从 cookie 中获取 Token
   // const token = req.headers['authorization']
   const token = req.cookies['access_tokenbook'];
