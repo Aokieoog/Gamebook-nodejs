@@ -6,4 +6,4 @@ const ItemSchema = new mongoose.Schema({
   iconID: { type: String, required: true},   // ID 字段
 });
 // 导出时使用正确的模型名称 Icon
-module.exports = mongoose.model('Items', ItemSchema);
+module.exports = mongoose.model('Item', ItemSchema);
