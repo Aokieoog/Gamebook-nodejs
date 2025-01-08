@@ -47,40 +47,48 @@ router.post('/users', async (req, res) => {
 
 // 用户登录接口
 router.post('/login', async (req, res) => {
-  const { loginAccount, password } = req.body;
+  const { loginAccount, password, token } = req.body;
   try {
-    // 查找用户
-    const user = await User.findOne({ loginAccount });
-    if (!user) {
-      return res.status(200).json({
-        code: 401,
-        message: '用户不存在'
-      });
-    }
-    // 验证密码
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) {
-      return res.status(200).json({
-        code: 402,
-        message: '密码错误'
-      });
-    }
-    // 生成 JWT（可选）
-    const token = jwt.sign(
-      { userId: user._id, loginAccount: user.loginAccount },
-      process.env.JWT_SECRET,
-      { expiresIn: '72h' }
-    );
-    res.status(200).json({
-      code: 200,
-      message: '登录成功',
-      token, // 返回 token
-      user: {
-        uid: user._id,
-        loginAccount: user.loginAccount,
-        email: user.email
+    if (token) {
+      jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+        if (err) {
+          return res.status(401).json({ error: '未授权: 令牌无效' });
+        } else {
+          res.status(200).json({
+            code: 200,
+            message: '登录成功',
+            token, // 返回 token
+          });
+        }
+        req.user = decoded; // 将解码后的用户数据存入 req
+      })
+    } else {
+      // 查找用户
+      const user = await User.findOne({ loginAccount });
+      const isMatch = await user.comparePassword(password);
+      if (!user || !isMatch) {
+        return res.status(200).json({
+          code: 401,
+          message: '用户不存在或密码错误'
+        });
       }
-    });
+      // 生成 JWT（可选）
+      const token = jwt.sign(
+        { userId: user._id, loginAccount: user.loginAccount },
+        process.env.JWT_SECRET,
+        { expiresIn: '72h' }
+      );
+      res.status(200).json({
+        code: 200,
+        message: '登录成功',
+        token, // 返回 token
+        user: {
+          uid: user._id,
+          loginAccount: user.loginAccount,
+          email: user.email
+        }
+      });
+    }
   } catch (err) {
     res.status(200).json({
       code: 500,
@@ -236,10 +244,10 @@ router.get('/items', async (req, res) => {
 router.post('/orders', async (req, res) => {
   try {
     const { userId, itemId, jin, yin, tong, quantity } = req.body;
-   // 验证必填字段
-  if (!userId || !itemId) {
-    return res.status(200).json({ code: 400, message: 'userId 和 itemId 是必填字段' });
-  }
+    // 验证必填字段
+    if (!userId || !itemId) {
+      return res.status(200).json({ code: 400, message: 'userId 和 itemId 是必填字段' });
+    }
     const selectedItem = await Item.findById(itemId);
     if (!selectedItem) {
       return res.status(200).json({ code: 400, message: 'Item 不存在' });
