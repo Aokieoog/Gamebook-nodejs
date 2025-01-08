@@ -236,18 +236,13 @@ router.get('/items', async (req, res) => {
 router.post('/orders', async (req, res) => {
   try {
     const { userId, itemId, jin, yin, tong, quantity } = req.body;
-    // 验证必填字段
-    if (!userId) {
-      return res.status(200).json({
-        code: 400,
-        message: 'userId 是必填字段'
-      });
-    }
-    if (!itemId) {
-      return res.status(200).json({
-        code: 400,
-        message: 'itemId 是必填字段'
-      });
+   // 验证必填字段
+  if (!userId || !itemId) {
+    return res.status(200).json({ code: 400, message: 'userId 和 itemId 是必填字段' });
+  }
+    const selectedItem = await Item.findById(itemId);
+    if (!selectedItem) {
+      return res.status(200).json({ code: 400, message: 'Item 不存在' });
     }
     // 创建订单
     const newOrder = new Order({
@@ -262,7 +257,6 @@ router.post('/orders', async (req, res) => {
     const savedOrder = await newOrder.save();
     const populatedOrder = await Order.findById(savedOrder._id)
       .populate('item', 'name iconID -_id'); // 填充 item，并指定只返回字段 name 和 price
-    console.log('populatedOrder', populatedOrder);
     res.status(200).json({
       code: 200,
       message: '订单添加成功',
@@ -292,8 +286,6 @@ router.get('/orderInquiry', async (req, res) => {
   const { userId } = req.query;
   try {
     const orders = await Order.find({ userId }).select('-__v');
-
-
     // 手动查询每个 order 的 item 信息
     const formattedOrders = await Promise.all(
       orders.map(async (order) => {
